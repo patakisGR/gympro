@@ -1,0 +1,8 @@
+gym-backend/.env
+gym-backend/venv/
+gym-backend/gym.db
+gym-backend/static/qrcodes/
+gym-frontend/node_modules/
+__pycache__/
+*.pyc
+.env
