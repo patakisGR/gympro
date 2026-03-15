@@ -198,10 +198,12 @@ def get_stats(db: Session = Depends(get_db)):
 
     total = db.query(func.count(models.Member.id)).scalar()
 
-    # Εγγραφές τρέχοντα μήνα
+    # Εγγραφές τρέχοντα μήνα (συμβατό με PostgreSQL και SQLite)
     today = date.today()
+    from sqlalchemy import extract
     this_month = db.query(func.count(models.Member.id)).filter(
-        func.strftime("%Y-%m", models.Member.registration_date) == today.strftime("%Y-%m")
+        extract("year", models.Member.registration_date) == today.year,
+        extract("month", models.Member.registration_date) == today.month,
     ).scalar()
 
     # Ανά τύπο συνδρομής
