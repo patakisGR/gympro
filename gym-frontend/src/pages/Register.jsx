@@ -78,7 +78,7 @@ export default function Register({ showNotif }) {
           <div style={{ marginBottom: 24 }}>
             <div className="qr-box" style={{ display: "inline-flex" }}>
               <img
-                src={`http://localhost:8000/static/qrcodes/${success.member_code}.png`}
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${success.member_code}&color=003F87`}
                 alt="QR Code"
                 width={140} height={140}
               />

@@ -204,7 +204,7 @@ export default function Members({ showNotif }) {
                   )}
                 </div>
                 <div className="qr-box">
-                  <img src={`http://localhost:8000/static/qrcodes/${detailM.member_code}.png`} alt="QR" width={120} height={120} />
+                  <img src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${detailM.member_code}&color=003F87`} alt="QR" width={120} height={120} />
                   <div style={{ fontSize: 10, color: "#64748B", fontFamily: "monospace" }}>{detailM.member_code}</div>
                 </div>
               </div>
