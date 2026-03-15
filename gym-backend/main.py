@@ -11,7 +11,7 @@ from pathlib import Path
 from config import settings
 from database import engine
 import models
-from routers import members
+from routers import members, auth
 
 
 # ─── Startup / Shutdown ───────────────────────────────────────────
@@ -56,6 +56,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 # ─── Routers ─────────────────────────────────────────────────────
+app.include_router(auth.router, prefix="/api/v1")
 app.include_router(members.router, prefix="/api/v1")
 
 

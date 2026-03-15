@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     # Anthropic
     ANTHROPIC_API_KEY: str = ""
 
+    # Admin credentials
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_PASSWORD_HASH: str = ""  # Βάλε hashed password στο .env
+
     # App
     SECRET_KEY: str = "change-me-in-production"
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"

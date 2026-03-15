@@ -7,6 +7,7 @@ import random
 from datetime import datetime
 
 from database import get_db
+from utils.auth import get_current_user
 import models, schemas
 from utils.qr import generate_qr_code, delete_qr_code
 from utils.email import send_welcome_email
@@ -48,6 +49,7 @@ async def create_member(
     member_in: schemas.MemberCreate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
     """Δημιουργία νέου μέλους με αυτόματο QR Code και email."""
 
@@ -96,6 +98,7 @@ def get_members(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
     """Λίστα μελών με δυνατότητα αναζήτησης και φιλτραρίσματος."""
     query = db.query(models.Member)
@@ -122,7 +125,7 @@ def get_members(
 
 # ─── READ ONE ────────────────────────────────────────────────────
 @router.get("/{member_id}", response_model=schemas.MemberResponse)
-def get_member(member_id: int, db: Session = Depends(get_db)):
+def get_member(member_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """Στοιχεία ενός μέλους."""
     member = db.query(models.Member).filter(models.Member.id == member_id).first()
     if not member:
@@ -136,6 +139,7 @@ def update_member(
     member_id: int,
     member_in: schemas.MemberUpdate,
     db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
     """Ενημέρωση στοιχείων μέλους."""
     member = db.query(models.Member).filter(models.Member.id == member_id).first()
@@ -159,7 +163,7 @@ def update_member(
 
 # ─── DELETE ──────────────────────────────────────────────────────
 @router.delete("/{member_id}", status_code=204)
-def delete_member(member_id: int, db: Session = Depends(get_db)):
+def delete_member(member_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """Διαγραφή μέλους και QR Code."""
     member = db.query(models.Member).filter(models.Member.id == member_id).first()
     if not member:
@@ -179,6 +183,7 @@ async def resend_welcome_email(
     member_id: int,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
     """Επαναποστολή email καλωσορίσματος."""
     member = db.query(models.Member).filter(models.Member.id == member_id).first()
@@ -191,7 +196,7 @@ async def resend_welcome_email(
 
 # ─── STATS ───────────────────────────────────────────────────────
 @router.get("/stats/summary")
-def get_stats(db: Session = Depends(get_db)):
+def get_stats(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """Στατιστικά για το dashboard."""
     from sqlalchemy import func
     from datetime import date

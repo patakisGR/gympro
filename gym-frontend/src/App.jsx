@@ -1,32 +1,25 @@
 import { useState, useCallback, useRef } from "react";
-import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
+import { BrowserRouter, Routes, Route, NavLink, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import Register from "./pages/Register";
 import Members from "./pages/Members";
 import Search from "./pages/Search";
+import Login from "./pages/Login";
 import "./index.css";
 
-// ─── Notification Context ────────────────────────────────────────
 export function useNotification() {
   const [notif, setNotif] = useState(null);
   const timer = useRef(null);
-
   const showNotif = useCallback((msg, type = "success") => {
     setNotif({ msg, type });
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setNotif(null), 4500);
   }, []);
-
   return { notif, showNotif, clearNotif: () => setNotif(null) };
 }
 
-// ─── Icons ───────────────────────────────────────────────────────
 export const Icons = {
-  Dumbbell: () => (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <path d="M6 4v16M18 4v16M6 8h12M6 16h12M3 8h3M3 16h3M18 8h3M18 16h3" />
-    </svg>
-  ),
+  Dumbbell: () => (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 4v16M18 4v16M6 8h12M6 16h12M3 8h3M3 16h3M18 8h3M18 16h3" /></svg>),
   Home: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
   Plus: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>,
   Users: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
@@ -38,14 +31,14 @@ export const Icons = {
   Eye: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>,
   Mail: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>,
   Refresh: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>,
+  Logout: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>,
 };
 
-// ─── Helpers (shared across pages) ───────────────────────────────
 export const MEMBERSHIP_TYPES = [
-  { value: "monthly",    label: "Μηνιαία",      price: "40€/μήνα",   color: "#3B82F6" },
-  { value: "quarterly",  label: "Τριμηνιαία",   price: "105€/3μηνο", color: "#8B5CF6" },
-  { value: "semiannual", label: "Εξαμηνιαία",   price: "190€/6μηνο", color: "#F59E0B" },
-  { value: "annual",     label: "Ετήσια",        price: "350€/έτος",  color: "#10B981" },
+  { value: "monthly",    label: "Μηνιαία",    price: "40€/μήνα",   color: "#3B82F6" },
+  { value: "quarterly",  label: "Τριμηνιαία", price: "105€/3μηνο", color: "#8B5CF6" },
+  { value: "semiannual", label: "Εξαμηνιαία", price: "190€/6μηνο", color: "#F59E0B" },
+  { value: "annual",     label: "Ετήσια",     price: "350€/έτος",  color: "#10B981" },
 ];
 export const GENDER_OPTIONS = [
   { value: "male",   label: "Άνδρας" },
@@ -66,7 +59,6 @@ export const fmtDate = (iso) => {
   return new Date(iso).toLocaleDateString("el-GR", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
-// ─── Notification Component ───────────────────────────────────────
 export function Notification({ notif, onClose }) {
   if (!notif) return null;
   return (
@@ -80,9 +72,21 @@ export function Notification({ notif, onClose }) {
   );
 }
 
-// ─── App ─────────────────────────────────────────────────────────
 export default function App() {
+  const [username, setUsername] = useState(localStorage.getItem("username") || null);
   const { notif, showNotif, clearNotif } = useNotification();
+
+  const handleLogin = (uname) => setUsername(uname);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    setUsername(null);
+  };
+
+  if (!username) {
+    return <Login onLogin={handleLogin} />;
+  }
 
   return (
     <BrowserRouter>
@@ -97,15 +101,16 @@ export default function App() {
             ["/members", <Icons.Users />, "Μέλη"],
             ["/search", <Icons.Search />, "Αναζήτηση"],
           ].map(([to, icon, label]) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === "/"}
-              className={({ isActive }) => `nav-btn${isActive ? " active" : ""}`}
-            >
+            <NavLink key={to} to={to} end={to === "/"} className={({ isActive }) => `nav-btn${isActive ? " active" : ""}`}>
               {icon} <span className="label">{label}</span>
             </NavLink>
           ))}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: 16 }}>
+          <span style={{ color: "rgba(255,255,255,.7)", fontSize: 13 }}>👤 {username}</span>
+          <button className="nav-btn" onClick={handleLogout} title="Αποσύνδεση">
+            <Icons.Logout /> <span className="label">Έξοδος</span>
+          </button>
         </div>
       </nav>
 
@@ -116,6 +121,7 @@ export default function App() {
         <Route path="/register" element={<Register showNotif={showNotif} />} />
         <Route path="/members"  element={<Members showNotif={showNotif} />} />
         <Route path="/search"   element={<Search showNotif={showNotif} />} />
+        <Route path="*"         element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
   );
