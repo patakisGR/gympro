@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     # SendGrid
     SENDGRID_API_KEY: str = ""
 
+    # MailerSend
+    MAILERSEND_API_KEY: str = ""
+
     # Anthropic
     ANTHROPIC_API_KEY: str = ""
 
