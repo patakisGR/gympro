@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import List, Optional
@@ -13,6 +13,10 @@ from utils.qr import generate_qr_code, delete_qr_code
 from utils.email import send_welcome_email
 
 router = APIRouter(prefix="/members", tags=["Μέλη"])
+
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+limiter = Limiter(key_func=get_remote_address)
 
 
 def generate_member_code() -> str:
@@ -45,7 +49,9 @@ async def send_email_background(member: models.Member, db: Session):
 
 # ─── CREATE ──────────────────────────────────────────────────────
 @router.post("/", response_model=schemas.MemberResponse, status_code=201)
+@limiter.limit("5/minute")
 async def create_member(
+    request: Request,
     member_in: schemas.MemberCreate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
@@ -179,7 +185,9 @@ def delete_member(member_id: int, db: Session = Depends(get_db), current_user: d
 
 # ─── RESEND EMAIL ─────────────────────────────────────────────────
 @router.post("/{member_id}/send-email")
+@limiter.limit("10/minute")
 async def resend_welcome_email(
+    request: Request,
     member_id: int,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),

@@ -1,10 +1,13 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
-from utils.auth import verify_password, create_access_token, hash_password, get_current_user
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from utils.auth import verify_password, create_access_token, get_current_user
 from config import settings
 
 router = APIRouter(prefix="/auth", tags=["Αυθεντικοποίηση"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 class LoginResponse(BaseModel):
@@ -13,23 +16,17 @@ class LoginResponse(BaseModel):
     username: str
 
 
-class ChangePasswordRequest(BaseModel):
-    current_password: str
-    new_password: str
-
-
 @router.post("/login", response_model=LoginResponse)
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    """Σύνδεση με username και password."""
+@limiter.limit("5/minute")
+def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
+    """Σύνδεση — max 5 προσπάθειες/λεπτό ανά IP."""
 
-    # Έλεγχος username
     if form_data.username != settings.ADMIN_USERNAME:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Λάθος username ή password",
         )
 
-    # Έλεγχος password
     if not verify_password(form_data.password, settings.ADMIN_PASSWORD_HASH):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -37,7 +34,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
         )
 
     token = create_access_token({"sub": form_data.username})
-
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -53,5 +49,5 @@ def get_me(current_user: dict = Depends(get_current_user)):
 
 @router.post("/logout")
 def logout():
-    """Αποσύνδεση (το token διαγράφεται από το frontend)."""
+    """Αποσύνδεση."""
     return {"message": "Αποσυνδεθήκατε επιτυχώς"}
