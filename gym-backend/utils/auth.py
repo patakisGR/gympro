@@ -5,9 +5,56 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from config import settings
+import threading
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+
+# ─── Account Lockout (in-memory) ─────────────────────────────────
+# Δεν χρειάζεται βάση — έχουμε μόνο έναν admin
+_lock = threading.Lock()
+_failed_attempts = 0
+_lockout_until: Optional[datetime] = None
+
+MAX_ATTEMPTS = 5
+LOCKOUT_MINUTES = 15
+
+
+def record_failed_attempt() -> tuple[int, Optional[datetime]]:
+    """Καταγράφει αποτυχημένη προσπάθεια και επιστρέφει (attempts, lockout_until)."""
+    global _failed_attempts, _lockout_until
+    with _lock:
+        _failed_attempts += 1
+        if _failed_attempts >= MAX_ATTEMPTS:
+            _lockout_until = datetime.utcnow() + timedelta(minutes=LOCKOUT_MINUTES)
+            print(f"🔒 Account locked until {_lockout_until}")
+        return _failed_attempts, _lockout_until
+
+
+def reset_failed_attempts():
+    """Μηδενίζει τις αποτυχημένες προσπάθειες μετά από επιτυχή σύνδεση."""
+    global _failed_attempts, _lockout_until
+    with _lock:
+        _failed_attempts = 0
+        _lockout_until = None
+
+
+def check_lockout() -> Optional[int]:
+    """
+    Ελέγχει αν το account είναι κλειδωμένο.
+    Επιστρέφει τα λεπτά που μένουν, ή None αν δεν είναι κλειδωμένο.
+    """
+    global _failed_attempts, _lockout_until
+    with _lock:
+        if _lockout_until is None:
+            return None
+        remaining = _lockout_until - datetime.utcnow()
+        if remaining.total_seconds() <= 0:
+            # Το lockout έληξε — ξεκλείδωμα
+            _failed_attempts = 0
+            _lockout_until = None
+            return None
+        return max(1, int(remaining.total_seconds() / 60))
 
 
 def verify_password(plain: str, hashed: str) -> bool:
