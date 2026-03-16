@@ -279,7 +279,35 @@ export default function Members({ showNotif }) {
                 ))}
               </tbody>
             </table>
+          {/* Mobile Cards */}
+          <div className="mobile-cards" style={{ display: "none" }}>
+            {filtered.map(m => (
+              <div key={m.id} className="mobile-card">
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                  <div className="avatar" style={{ background: avColor(m.member_code) }}>
+                    {initials(m.first_name, m.last_name)}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 15 }}>{m.first_name} {m.last_name}</div>
+                    <div style={{ fontSize: 11, color: "#64748B" }}>{m.member_code}</div>
+                  </div>
+                  <span className="badge" style={{ background: `${mcolor(m.membership_type)}15`, color: mcolor(m.membership_type) }}>
+                    {mlabel(m.membership_type)}
+                  </span>
+                </div>
+                <div style={{ fontSize: 13, color: "#64748B", marginBottom: 3 }}>📞 {m.phone}</div>
+                <div style={{ fontSize: 13, color: "#64748B", marginBottom: 10 }}>✉ {m.email}</div>
+                <div style={{ fontSize: 12, color: "#94A3B8", marginBottom: 10 }}>📅 {fmtDate(m.registration_date)}</div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button className="btn btn-sm btn-secondary" style={{ flex: 1 }} onClick={() => setDetailM(m)}><Icons.Eye /> Προβολή</button>
+                  <button className="btn btn-sm btn-secondary btn-icon" onClick={() => { setEditM({ ...m }); setEditErrors({}); }}><Icons.Edit /></button>
+                  <button className="btn btn-sm btn-secondary btn-icon" onClick={() => handleSendEmail(m)}><Icons.Mail /></button>
+                  <button className="btn btn-sm btn-danger btn-icon" onClick={() => setDeleteM(m)}><Icons.Trash /></button>
+                </div>
+              </div>
+            ))}
           </div>
+        </div>
         )}
       </div>
 

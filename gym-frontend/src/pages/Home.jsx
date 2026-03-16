@@ -47,7 +47,7 @@ export default function Home({ showNotif }) {
             ))}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="home-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div className="card">
               <h3 style={{ fontFamily: "'Exo 2',sans-serif", fontSize: 15, marginBottom: 14, color: "#003F87" }}>
                 ⚡ Γρήγορες Ενέργειες
