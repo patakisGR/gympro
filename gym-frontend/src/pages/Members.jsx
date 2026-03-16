@@ -1,23 +1,35 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { getMembers, deleteMember, updateMember, sendEmail } from "../api";
 import { mlabel, mcolor, initials, avColor, fmtDate, MEMBERSHIP_TYPES, GENDER_OPTIONS, Icons } from "../App";
 
-const EMPTY_EDIT = { first_name: "", last_name: "", phone: "", email: "", birth_date: "", gender: "", membership_type: "monthly", notes: "" };
+const MONTHS = [
+  { value: "1", label: "Ιανουάριος" }, { value: "2", label: "Φεβρουάριος" },
+  { value: "3", label: "Μάρτιος" },    { value: "4", label: "Απρίλιος" },
+  { value: "5", label: "Μάιος" },      { value: "6", label: "Ιούνιος" },
+  { value: "7", label: "Ιούλιος" },    { value: "8", label: "Αύγουστος" },
+  { value: "9", label: "Σεπτέμβριος" },{ value: "10", label: "Οκτώβριος" },
+  { value: "11", label: "Νοέμβριος" }, { value: "12", label: "Δεκέμβριος" },
+];
 
 export default function Members({ showNotif }) {
   const [members, setMembers] = useState([]);
+  const [allMembers, setAllMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState("");
+  const [filterMonth, setFilterMonth] = useState("");
   const [detailM, setDetailM] = useState(null);
   const [editM, setEditM] = useState(null);
   const [deleteM, setDeleteM] = useState(null);
   const [editErrors, setEditErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   const load = useCallback(async (q = "") => {
     setLoading(true);
     try {
       const { data } = await getMembers(q ? { q } : {});
+      setAllMembers(data);
       setMembers(data);
     } catch {
       showNotif("Σφάλμα φόρτωσης μελών", "error");
@@ -28,16 +40,38 @@ export default function Members({ showNotif }) {
 
   useEffect(() => { load(); }, []);
 
-  // Debounced search
   useEffect(() => {
     const t = setTimeout(() => load(search), 300);
     return () => clearTimeout(t);
   }, [search]);
 
+  // ── Φιλτράρισμα frontend-side ──
+  const filtered = useMemo(() => {
+    let result = allMembers;
+    if (filterType) {
+      result = result.filter(m => m.membership_type === filterType);
+    }
+    if (filterMonth) {
+      result = result.filter(m => {
+        if (!m.registration_date) return false;
+        const month = new Date(m.registration_date).getMonth() + 1;
+        return month === parseInt(filterMonth);
+      });
+    }
+    return result;
+  }, [allMembers, filterType, filterMonth]);
+
+  const activeFilters = (filterType ? 1 : 0) + (filterMonth ? 1 : 0);
+
+  const clearFilters = () => {
+    setFilterType("");
+    setFilterMonth("");
+  };
+
   const handleDelete = async () => {
     try {
       await deleteMember(deleteM.id);
-      setMembers(ms => ms.filter(m => m.id !== deleteM.id));
+      setAllMembers(ms => ms.filter(m => m.id !== deleteM.id));
       setDeleteM(null);
       if (detailM?.id === deleteM.id) setDetailM(null);
       showNotif("Το μέλος διαγράφηκε.", "info");
@@ -53,23 +87,17 @@ export default function Members({ showNotif }) {
     if (!editM.phone?.trim()) errs.phone = "Υποχρεωτικό";
     if (!editM.email?.trim()) errs.email = "Υποχρεωτικό";
     if (Object.keys(errs).length) { setEditErrors(errs); return; }
-
     setSaving(true);
     try {
       const { data } = await updateMember(editM.id, {
-        first_name: editM.first_name,
-        last_name: editM.last_name,
-        phone: editM.phone,
-        email: editM.email,
-        birth_date: editM.birth_date || null,
-        gender: editM.gender || null,
-        membership_type: editM.membership_type,
-        notes: editM.notes,
+        first_name: editM.first_name, last_name: editM.last_name,
+        phone: editM.phone, email: editM.email,
+        birth_date: editM.birth_date || null, gender: editM.gender || null,
+        membership_type: editM.membership_type, notes: editM.notes,
       });
-      setMembers(ms => ms.map(m => m.id === data.id ? data : m));
+      setAllMembers(ms => ms.map(m => m.id === data.id ? data : m));
       if (detailM?.id === data.id) setDetailM(data);
-      setEditM(null);
-      setEditErrors({});
+      setEditM(null); setEditErrors({});
       showNotif("Τα στοιχεία αποθηκεύτηκαν!");
     } catch (err) {
       showNotif(err.response?.data?.detail || "Σφάλμα αποθήκευσης", "error");
@@ -90,13 +118,36 @@ export default function Members({ showNotif }) {
   return (
     <div className="page">
       <div className="sec-header">
-        <div className="sec-title">👥 Μέλη ({members.length})</div>
-        <a href="/register" className="btn btn-primary btn-sm">+ Νέα Εγγραφή</a>
+        <div className="sec-title">
+          👥 Μέλη ({filtered.length}{filtered.length !== allMembers.length ? ` / ${allMembers.length}` : ""})
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            className={`btn btn-sm ${showFilters ? "btn-primary" : "btn-secondary"}`}
+            onClick={() => setShowFilters(s => !s)}
+            style={{ position: "relative" }}
+          >
+            🔽 Φίλτρα
+            {activeFilters > 0 && (
+              <span style={{
+                position: "absolute", top: -6, right: -6,
+                background: "#EF4444", color: "#fff",
+                borderRadius: "50%", width: 18, height: 18,
+                fontSize: 11, fontWeight: 700,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                {activeFilters}
+              </span>
+            )}
+          </button>
+          <a href="/register" className="btn btn-primary btn-sm">+ Νέα Εγγραφή</a>
+        </div>
       </div>
 
       <div className="card" style={{ padding: 0 }}>
+        {/* ── Search & Filters ── */}
         <div style={{ padding: "14px 20px", borderBottom: "1px solid #E2E8F0" }}>
-          <div className="search-wrap">
+          <div className="search-wrap" style={{ marginBottom: showFilters ? 12 : 0 }}>
             <span className="search-icon"><Icons.Search /></span>
             <input
               value={search}
@@ -105,13 +156,85 @@ export default function Members({ showNotif }) {
               style={{ paddingLeft: 42 }}
             />
           </div>
+
+          {/* Filters Panel */}
+          {showFilters && (
+            <div style={{
+              background: "#F8FAFC", borderRadius: 8, padding: "14px 16px",
+              border: "1px solid #E2E8F0", display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end"
+            }}>
+              {/* Τύπος Συνδρομής */}
+              <div style={{ flex: 1, minWidth: 180 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: ".4px", marginBottom: 6 }}>
+                  Τύπος Συνδρομής
+                </label>
+                <select
+                  value={filterType}
+                  onChange={e => setFilterType(e.target.value)}
+                  style={{ width: "100%", padding: "8px 12px", border: "1.5px solid #E2E8F0", borderRadius: 8, fontSize: 13, fontFamily: "'Noto Sans',sans-serif", outline: "none", background: "#fff" }}
+                >
+                  <option value="">Όλες οι συνδρομές</option>
+                  {MEMBERSHIP_TYPES.map(t => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Μήνας Εγγραφής */}
+              <div style={{ flex: 1, minWidth: 180 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: ".4px", marginBottom: 6 }}>
+                  Μήνας Εγγραφής
+                </label>
+                <select
+                  value={filterMonth}
+                  onChange={e => setFilterMonth(e.target.value)}
+                  style={{ width: "100%", padding: "8px 12px", border: "1.5px solid #E2E8F0", borderRadius: 8, fontSize: 13, fontFamily: "'Noto Sans',sans-serif", outline: "none", background: "#fff" }}
+                >
+                  <option value="">Όλοι οι μήνες</option>
+                  {MONTHS.map(m => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Clear Filters */}
+              {activeFilters > 0 && (
+                <button className="btn btn-secondary btn-sm" onClick={clearFilters}>
+                  ✕ Καθαρισμός φίλτρων
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Active filter badges */}
+          {activeFilters > 0 && !showFilters && (
+            <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+              {filterType && (
+                <span style={{ background: `${mcolor(filterType)}15`, color: mcolor(filterType), border: `1px solid ${mcolor(filterType)}40`, borderRadius: 20, padding: "2px 10px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+                  {mlabel(filterType)}
+                  <button onClick={() => setFilterType("")} style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", fontSize: 13, lineHeight: 1 }}>✕</button>
+                </span>
+              )}
+              {filterMonth && (
+                <span style={{ background: "#E8F0FB", color: "#003F87", border: "1px solid #BFDBFE", borderRadius: 20, padding: "2px 10px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+                  {MONTHS.find(m => m.value === filterMonth)?.label}
+                  <button onClick={() => setFilterMonth("")} style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", fontSize: 13, lineHeight: 1 }}>✕</button>
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {loading ? (
           <div className="loading"><div className="spinner spinner-dark" /></div>
-        ) : members.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="empty">
             <p style={{ fontSize: 15, fontWeight: 600 }}>Δεν βρέθηκαν μέλη</p>
+            {activeFilters > 0 && (
+              <button className="btn btn-secondary btn-sm" onClick={clearFilters} style={{ marginTop: 12 }}>
+                Καθαρισμός φίλτρων
+              </button>
+            )}
           </div>
         ) : (
           <div className="table-wrap">
@@ -123,7 +246,7 @@ export default function Members({ showNotif }) {
                 </tr>
               </thead>
               <tbody>
-                {members.map(m => (
+                {filtered.map(m => (
                   <tr key={m.id}>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
