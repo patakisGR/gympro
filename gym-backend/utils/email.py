@@ -90,6 +90,8 @@ def build_email_html(member_data: dict) -> tuple[str, str]:
 
 async def send_welcome_email(member_data: dict, qr_code_path: str) -> bool:
     provider = settings.EMAIL_PROVIDER.lower()
+    if provider == "disabled":
+        return False
     if provider == "gmail":
         return await _send_via_gmail(member_data, qr_code_path)
     elif provider == "sendgrid":

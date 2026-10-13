@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./gym.db"
 
     # Email
-    EMAIL_PROVIDER: str = "gmail"  # "gmail" ή "sendgrid"
+    EMAIL_PROVIDER: str = "gmail"  # "disabled", "gmail", "sendgrid", "mailersend"
     GYM_NAME: str = "GymPro"
     GYM_EMAIL: str = "info@gymname.gr"
     GYM_PHONE: str = "210-1234567"
