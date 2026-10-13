@@ -23,7 +23,7 @@ GymPro is a full stack web application for managing gym members and memberships.
 | Database | SQLite for local defaults, PostgreSQL supported via configuration |
 | Authentication | JWT, password hashing |
 | Integrations | QR code generation, email providers |
-| Deployment configuration | Vercel frontend configuration, Railway backend URL in frontend API client |
+| Frontend API configuration | VITE_API_BASE_URL, defaulting to the local FastAPI server |
 
 ## Project structure
 
@@ -106,7 +106,20 @@ npm run dev
 
 Open the local address shown by Vite (typically [http://localhost:5173](http://localhost:5173)).
 
-**Important:** The frontend API base URL is currently hardcoded in `gym-frontend/src/api.js` to a deployed Railway backend. To use your local backend, change the Axios `baseURL` to `http://localhost:8000/api/v1` and ensure `ALLOWED_ORIGINS` includes the frontend origin. Making this configurable through a Vite environment variable is a recommended follow-up improvement.
+Login and member requests share `VITE_API_BASE_URL`. It defaults to `http://127.0.0.1:8000/api/v1` in both development and production builds; no hosted backend is required.
+
+To override it, copy `gym-frontend/.env.example` to `gym-frontend/.env.local` (PowerShell: `Copy-Item .env.example .env.local` from the frontend directory) and edit the URL, including `/api/v1`. Restart Vite after changing it. Vite embeds this public value at build time, so rebuild to change a production bundle; never put secrets in `VITE_*` variables.
+
+To check the production build locally:
+
+```bash
+npm run build
+npm run preview -- --host localhost --port 5173 --strictPort
+```
+
+Stop the development frontend first to free port 5173. Keep the backend running and ensure its `ALLOWED_ORIGINS` includes the frontend origin (`http://localhost:5173` for these commands). The API URL is the backend address; the CORS origin is the frontend address.
+
+The existing local demo launcher can be started from the repository root with `.venv\Scripts\python.exe gym-backend/run_local.py` on Windows. It uses `gym-backend/.local-data/gym-local.db`, prints its demo login, and disables outgoing email. It generates a new JWT secret at every restart, so sign in again afterwards. Do not confuse this database with `gym-backend/gym.db`, which is the default for the standard backend command above. QR images and web fonts still require internet.
 
 ## API overview
 
@@ -142,7 +155,6 @@ Screenshots of the login screen, dashboard and member management views will be a
 
 - Add backend API tests and frontend component tests
 - Run linting, builds and tests through GitHub Actions
-- Make the frontend API URL configurable
 - Add sanitized screenshots or a short demo
 - Introduce database migrations
 

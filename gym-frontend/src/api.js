@@ -1,7 +1,8 @@
 import axios from "axios";
+import { API_BASE_URL } from "./config";
 
 const api = axios.create({
-  baseURL: import.meta.env.DEV ? "http://127.0.0.1:8000/api/v1" : "https://gympro-production-624d.up.railway.app/api/v1",
+  baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
 });
 
