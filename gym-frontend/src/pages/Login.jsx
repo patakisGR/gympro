@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 
-const API = "https://gympro-production-624d.up.railway.app";
+const API = import.meta.env.DEV ? "http://127.0.0.1:8000" : "https://gympro-production-624d.up.railway.app";
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState("");
