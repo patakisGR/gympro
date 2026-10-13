@@ -79,10 +79,13 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=["HS256"],
+            options={"require_exp": True, "require_sub": True},
+        )
         username: str = payload.get("sub")
-        if username is None:
+        if not isinstance(username, str) or not username or username != settings.ADMIN_USERNAME:
             raise credentials_exception
         return {"username": username}
-    except JWTError:
+    except (JWTError, TypeError, ValueError, OverflowError):
         raise credentials_exception

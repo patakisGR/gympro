@@ -23,7 +23,7 @@ def test_app(tmp_path_factory):
         patch.setenv("DATABASE_URL", "sqlite:///" + test_database.as_posix())
         patch.setenv("ADMIN_USERNAME", "test_admin")
         patch.setenv("ADMIN_PASSWORD_HASH", bcrypt.hash("test-password"))
-        patch.setenv("SECRET_KEY", "test-only-secret")
+        patch.setenv("SECRET_KEY", "test-only-secret-at-least-32-characters")
 
         import main
         import database

@@ -146,8 +146,8 @@ Screenshots of the login screen, dashboard and member management views will be a
 ## Security and development notes
 
 - Use environment variables for secrets, credentials and database connections.
-- The current backend startup logs the configured database URL. Avoid logging connection strings containing passwords in production.
-- The default secret in `config.py` is a development placeholder and must be replaced.
+- Startup rejects a missing, placeholder or shorter-than-32-character JWT secret before creating database tables. Generate a private random secret; length alone does not guarantee strength. The local launcher generates one automatically.
+- Startup does not log the database connection string. JWTs must have an expiry and identify the configured admin.
 - The current frontend stores an authentication token in browser local storage. Review this approach and its XSS exposure before production use.
 - The database tables are currently created during app startup. Database migrations would be a useful future improvement.
 
