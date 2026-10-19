@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { getMembers } from "../api";
-import { mlabel, mcolor, initials, avColor, fmtDate, Icons } from "../App";
+import { mlabel, mcolor, initials, avColor, fmtDate } from "../utils/memberDisplay";
+import { Icons } from "../components/Icons";
 
 export default function Search({ showNotif }) {
   const [query, setQuery] = useState("");

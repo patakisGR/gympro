@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { getMembers, deleteMember, updateMember, sendEmail } from "../api";
-import { mlabel, mcolor, initials, avColor, fmtDate, MEMBERSHIP_TYPES, GENDER_OPTIONS, Icons } from "../App";
+import { mlabel, mcolor, initials, avColor, fmtDate, MEMBERSHIP_TYPES, GENDER_OPTIONS } from "../utils/memberDisplay";
+import { Icons } from "../components/Icons";
 
 const MONTHS = [
   { value: "1", label: "Ιανουάριος" }, { value: "2", label: "Φεβρουάριος" },
