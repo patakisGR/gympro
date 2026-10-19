@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 
-const API = "https://gympro-production-624d.up.railway.app";
+import { API_BASE_URL } from "../config";
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState("");
@@ -19,7 +19,7 @@ export default function Login({ onLogin }) {
       form.append("username", username);
       form.append("password", password);
 
-      const { data } = await axios.post(`${API}/api/v1/auth/login`, form);
+      const { data } = await axios.post(`${API_BASE_URL}/auth/login`, form);
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("username", data.username);
       onLogin(data.username);

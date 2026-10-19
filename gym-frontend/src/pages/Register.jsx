@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createMember } from "../api";
-import { MEMBERSHIP_TYPES, GENDER_OPTIONS } from "../App";
+import { MEMBERSHIP_TYPES, GENDER_OPTIONS } from "../utils/memberDisplay";
 
 const EMPTY = {
   first_name: "", last_name: "", phone: "", email: "",

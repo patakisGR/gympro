@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./gym.db"
 
     # Email
-    EMAIL_PROVIDER: str = "gmail"  # "gmail" ή "sendgrid"
+    EMAIL_PROVIDER: str = "gmail"  # "disabled", "gmail", "sendgrid", "mailersend"
     GYM_NAME: str = "GymPro"
     GYM_EMAIL: str = "info@gymname.gr"
     GYM_PHONE: str = "210-1234567"
@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     # App
     SECRET_KEY: str = "change-me-in-production"
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
+
+    def validate_security(self) -> None:
+        if len(self.SECRET_KEY.strip()) < 32 or self.SECRET_KEY.strip() == "change-me-in-production":
+            raise ValueError("SECRET_KEY must be a private random value of at least 32 characters.")
 
     @property
     def allowed_origins_list(self) -> List[str]:

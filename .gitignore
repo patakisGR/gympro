@@ -6,3 +6,10 @@ gym-frontend/node_modules/
 __pycache__/
 *.pyc
 .env
+gym-backend/.local-data/
+
+.pytest_cache/
+
+.venv/
+
+.pytest-tmp-local/

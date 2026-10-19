@@ -24,11 +24,11 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
 # ─── Startup / Shutdown ───────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    settings.validate_security()
     models.Base.metadata.create_all(bind=engine)
     Path("static/qrcodes").mkdir(parents=True, exist_ok=True)
     print(f"✅ {settings.GYM_NAME} Backend ξεκίνησε!")
     print(f"📧 Email provider: {settings.EMAIL_PROVIDER}")
-    print(f"🗄️  Database: {settings.DATABASE_URL}")
     yield
     print("🛑 Backend τερματίστηκε.")
 

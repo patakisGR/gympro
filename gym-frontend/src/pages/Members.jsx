@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getMembers, deleteMember, updateMember, sendEmail } from "../api";
-import { mlabel, mcolor, initials, avColor, fmtDate, MEMBERSHIP_TYPES, GENDER_OPTIONS, Icons } from "../App";
+import { mlabel, mcolor, initials, avColor, fmtDate, MEMBERSHIP_TYPES, GENDER_OPTIONS } from "../utils/memberDisplay";
+import { Icons } from "../components/Icons";
 
 const MONTHS = [
   { value: "1", label: "Ιανουάριος" }, { value: "2", label: "Φεβρουάριος" },
@@ -12,7 +13,6 @@ const MONTHS = [
 ];
 
 export default function Members({ showNotif }) {
-  const [members, setMembers] = useState([]);
   const [allMembers, setAllMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -25,25 +25,25 @@ export default function Members({ showNotif }) {
   const [saving, setSaving] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-  const load = useCallback(async (q = "") => {
-    setLoading(true);
-    try {
-      const { data } = await getMembers(q ? { q } : {});
-      setAllMembers(data);
-      setMembers(data);
-    } catch {
-      showNotif("Σφάλμα φόρτωσης μελών", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { load(); }, []);
-
   useEffect(() => {
-    const t = setTimeout(() => load(search), 300);
-    return () => clearTimeout(t);
-  }, [search]);
+    let active = true;
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const { data } = await getMembers(search ? { q: search } : {});
+        if (active) setAllMembers(data);
+      } catch {
+        if (active) showNotif("Σφάλμα φόρτωσης μελών", "error");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [search, showNotif]);
 
   // ── Φιλτράρισμα frontend-side ──
   const filtered = useMemo(() => {
@@ -100,7 +100,22 @@ export default function Members({ showNotif }) {
       setEditM(null); setEditErrors({});
       showNotif("Τα στοιχεία αποθηκεύτηκαν!");
     } catch (err) {
-      showNotif(err.response?.data?.detail || "Σφάλμα αποθήκευσης", "error");
+      const detail = err.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        const fieldErrors = {};
+        for (const issue of detail) {
+          const field = issue.loc?.[1];
+          if (typeof field === "string") {
+            fieldErrors[field] = typeof issue.msg === "string"
+              ? issue.msg.replace(/^Value error, /, "")
+              : "Μη έγκυρη τιμή";
+          }
+        }
+        setEditErrors(fieldErrors);
+        showNotif("Ελέγξτε τα στοιχεία της φόρμας. Δεν αποθηκεύτηκαν αλλαγές.", "error");
+      } else {
+        showNotif(typeof detail === "string" ? detail : "Σφάλμα αποθήκευσης", "error");
+      }
     } finally {
       setSaving(false);
     }

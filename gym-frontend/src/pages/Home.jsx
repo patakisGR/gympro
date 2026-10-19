@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getStats, getMembers } from "../api";
-import { MEMBERSHIP_TYPES, mlabel, mcolor, initials, avColor, fmtDate } from "../App";
+import { MEMBERSHIP_TYPES, mlabel, mcolor, initials, avColor, fmtDate } from "../utils/memberDisplay";
 
 export default function Home({ showNotif }) {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export default function Home({ showNotif }) {
       })
       .catch(() => showNotif("Σφάλμα σύνδεσης με το backend", "error"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [showNotif]);
 
   return (
     <div className="page">
