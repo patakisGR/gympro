@@ -139,6 +139,27 @@ The backend registers its authentication and member routes under `/api/v1`.
 
 Member management endpoints use authentication.
 
+## Tests and continuous integration
+
+The [CI workflow](.github/workflows/ci.yml) defines two independent checks on pushes and pull requests:
+
+- **Backend tests:** Python 3.12, dependencies from `requirements-test.txt`, and `python -m pytest -q`.
+- **Frontend lint and build:** Node.js 24, `npm ci`, lint with zero warnings allowed, and a production build.
+
+Tests cover login, lockout, JWT rejection, startup secret validation, persistent local credentials, disabled email, and member update validation. They create temporary SQLite databases and synthetic data; they do not use your local database or `.env`, and email delivery is mocked. No application secrets, PostgreSQL service, or running local servers are needed in CI. This workflow performs checks only; it does not deploy the application.
+
+Run the same checks locally from the repository root with your Python environment activated:
+
+```bash
+python -m pip install -r requirements-test.txt
+python -m pytest -q
+npm ci --prefix gym-frontend
+npm run lint --prefix gym-frontend -- --max-warnings 0
+npm run build --prefix gym-frontend
+```
+
+Stop the frontend dev server before reinstalling its dependencies with `npm ci`. Test and build results appear under the repository's Actions tab after the workflow is pushed. A first GitHub run is still needed to verify the Ubuntu runner; passing local checks is not evidence of a successful GitHub run.
+
 ## Screenshots
 
 Screenshots of the login screen, dashboard and member management views will be added here. Use sample member data rather than real personal information.
@@ -153,8 +174,7 @@ Screenshots of the login screen, dashboard and member management views will be a
 
 ## Next improvements
 
-- Add backend API tests and frontend component tests
-- Run linting, builds and tests through GitHub Actions
+- Expand backend API coverage and add focused frontend component tests
 - Add sanitized screenshots or a short demo
 - Introduce database migrations
 
