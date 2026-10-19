@@ -100,7 +100,22 @@ export default function Members({ showNotif }) {
       setEditM(null); setEditErrors({});
       showNotif("Τα στοιχεία αποθηκεύτηκαν!");
     } catch (err) {
-      showNotif(err.response?.data?.detail || "Σφάλμα αποθήκευσης", "error");
+      const detail = err.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        const fieldErrors = {};
+        for (const issue of detail) {
+          const field = issue.loc?.[1];
+          if (typeof field === "string") {
+            fieldErrors[field] = typeof issue.msg === "string"
+              ? issue.msg.replace(/^Value error, /, "")
+              : "Μη έγκυρη τιμή";
+          }
+        }
+        setEditErrors(fieldErrors);
+        showNotif("Ελέγξτε τα στοιχεία της φόρμας. Δεν αποθηκεύτηκαν αλλαγές.", "error");
+      } else {
+        showNotif(typeof detail === "string" ? detail : "Σφάλμα αποθήκευσης", "error");
+      }
     } finally {
       setSaving(false);
     }

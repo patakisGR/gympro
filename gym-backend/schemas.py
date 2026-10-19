@@ -58,6 +58,20 @@ class MemberUpdate(BaseModel):
     membership_type: Optional[MembershipEnum] = None
     notes: Optional[str] = None
 
+    @field_validator("first_name", "last_name", "phone", "email", "membership_type", mode="before")
+    @classmethod
+    def reject_null_required_fields(cls, v):
+        # Omitted PATCH fields keep their defaults and are excluded from the update.
+        # Explicit null must not clear a NOT NULL database column.
+        if v is None:
+            raise ValueError("Το υποχρεωτικό πεδίο δεν μπορεί να είναι null")
+        return v
+
+    @field_validator("first_name", "last_name")
+    @classmethod
+    def not_empty(cls, v: str) -> str:
+        return MemberCreate.not_empty(v)
+
     @field_validator("phone")
     @classmethod
     def validate_phone(cls, v: Optional[str]) -> Optional[str]:
